@@ -20,7 +20,6 @@ interface VideoMetadata {
     description: string;
     duration: number;
     fileName: string;
-    thumbnailName: string;
 }
 
 async function uploadToPinata(filePath: string, name: string) {
@@ -43,13 +42,11 @@ async function uploadToPinata(filePath: string, name: string) {
 
 async function createAndUploadMetadata(
     videoHash: string, 
-    thumbnailHash: string, 
     metadata: VideoMetadata
 ) {
     const nftMetadata = {
         name: metadata.title,
         description: metadata.description,
-        image: `ipfs://${thumbnailHash}`,
         animation_url: `ipfs://${videoHash}`,
         attributes: [
             {
@@ -60,7 +57,12 @@ async function createAndUploadMetadata(
     };
 
     try {
-        const result = await pinata.pinJSONToIPFS(nftMetadata);
+        const options = {
+            pinataMetadata: {
+                name: metadata.title
+            }
+        };
+        const result = await pinata.pinJSONToIPFS(nftMetadata, options);
         console.log(`Metadatos subidos a IPFS con hash: ${result.IpfsHash}`);
         return result.IpfsHash;
     } catch (error) {
@@ -70,65 +72,30 @@ async function createAndUploadMetadata(
 }
 
 async function main() {
-    // Verificar que las credenciales se están leyendo correctamente
-    console.log('API Key length:', process.env.PINATA_API_KEY?.length);
-    console.log('Secret Key length:', process.env.PINATA_SECRET_KEY?.length);
-    
     // Configuración del video
     const videoMetadata: VideoMetadata = {
-        title: "Mi Video NFT",
-        description: "Este es mi primer video NFT subido a IPFS",
+        title: "Rocket",
+        description: "This is a rocket video",
         duration: 300,
-        fileName: "horse.mp4",
-        thumbnailName: "akira.jpg"
+        fileName: "rocket2.mp4"
     };
 
     try {
-        // Obtener la ruta absoluta del directorio raíz del proyecto
-        const projectRoot = path.resolve(__dirname, '..');
-        const assetsDir = path.join(projectRoot, 'assets');
-        
-        // Verificar si existe el directorio assets
-        if (!fs.existsSync(assetsDir)) {
-            throw new Error(`El directorio assets no existe en: ${assetsDir}`);
-        }
-        
-        console.log('Directorio assets encontrado en:', assetsDir);
-        
-        // Construir las rutas completas
+        // Construir la ruta completa del video
         const videoPath = path.resolve('./assets', videoMetadata.fileName);
-        const thumbnailPath = path.resolve('./assets', videoMetadata.thumbnailName);
-        
-        // Verificar la existencia de los archivos individualmente
-        if (!fs.existsSync(videoPath)) {
-            throw new Error(`El archivo de video no existe en: ${videoPath}`);
-        }
-        
-        if (!fs.existsSync(thumbnailPath)) {
-            throw new Error(`El archivo de thumbnail no existe en: ${thumbnailPath}`);
-        }
-        
-        console.log('Archivos encontrados:');
-        console.log('- Video:', videoPath);
-        console.log('- Thumbnail:', thumbnailPath);
 
         // 1. Subir video
         console.log("Subiendo video...");
-        const videoHash = await uploadToPinata(videoPath, "Video NFT2");
+        const videoHash = await uploadToPinata(videoPath, "Video NFT");
 
-        // 2. Subir thumbnail
-        console.log("Subiendo thumbnail...");
-        const thumbnailHash = await uploadToPinata(thumbnailPath, "Video NFT Thumbnail2");
-
-        // 3. Crear y subir metadatos
+        // 2. Crear y subir metadatos
         console.log("Creando y subiendo metadatos...");
         const metadataHash = await createAndUploadMetadata(
             videoHash,
-            thumbnailHash,
             videoMetadata
         );
 
-        // 4. Mintear el NFT
+        // 3. Mintear el NFT
         console.log("Minteando el NFT...");
         const CONTRACT_ADDRESS = process.env.NFT_CONTRACT_ADDRESS;
         
@@ -145,10 +112,8 @@ async function main() {
         );
 
         const tx = await videoNFT.mintVideo(
-            videoMetadata.title,
-            videoMetadata.description,
-            videoMetadata.duration,
-            `ipfs://${metadataHash}`
+            wallet.address, // dirección a la que se minteará el NFT
+            `ipfs://${metadataHash}` // URI de los metadatos
         );
 
         console.log("Esperando confirmación de la transacción...");
@@ -172,11 +137,10 @@ async function main() {
                 topics: event.topics,
                 data: event.data
             });
-            const tokenId = parsedLog?.args[0]; // El tokenId suele ser el primer argumento
+            const tokenId = parsedLog?.args[0];
             console.log(`¡NFT minteado exitosamente! Token ID: ${tokenId}`);
             console.log("\nResumen:");
             console.log(`Video IPFS: ipfs://${videoHash}`);
-            console.log(`Thumbnail IPFS: ipfs://${thumbnailHash}`);
             console.log(`Metadata IPFS: ipfs://${metadataHash}`);
             console.log(`\nPuedes ver tu archivo en:`);
             console.log(`https://gateway.pinata.cloud/ipfs/${videoHash}`);
