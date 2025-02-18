@@ -36,7 +36,7 @@ lerna-debug.log*
 /typechain-types
 
 # Hardhat Ignition files
-/ignition/deployments/chain-31337
+/ignition
 
 # OS
 .DS_Store
