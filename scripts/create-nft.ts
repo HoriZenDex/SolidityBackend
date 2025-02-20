@@ -74,8 +74,8 @@ async function createAndUploadMetadata(
 async function main() {
     // Configuración del video
     const videoMetadata: VideoMetadata = {
-        title: "My beautiful beach",
-        description: "This is a beautiful beach video",
+        title: "My beautiful beach Ola",
+        description: "This is a beautiful beach video XD",
         duration: 300,
         fileName: "beach2.mp4"
     };
@@ -86,7 +86,7 @@ async function main() {
 
         // 1. Subir video
         console.log("Subiendo video...");
-        const videoHash = await uploadToPinata(videoPath, "Video NFT Beach");
+        const videoHash = await uploadToPinata(videoPath, "Video NFT Beach XD");
 
         // 2. Crear y subir metadatos
         console.log("Creando y subiendo metadatos...");
