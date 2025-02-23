@@ -1,17 +1,19 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-ethers";
-import dotenv from "dotenv";
+import "@nomicfoundation/hardhat-ignition-ethers";
+import "@nomicfoundation/hardhat-verify";
+import * as dotenv from "dotenv";
+
 dotenv.config();
-const privateKey = process.env.PRIVATE_KEY;
-const account = privateKey ? [privateKey] : [];
+
 const config: HardhatUserConfig = {
   solidity: "0.8.28",
   networks: {
     abcTestnet: {
       url: "https://rpc.abc.t.raas.gelato.cloud",
-      chainId: 112,
-      accounts: account,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 112
     }
   },
   etherscan: {
